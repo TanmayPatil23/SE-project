@@ -1,11 +1,7 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, redirect
 from flask_wtf import FlaskForm
-from flask_wtf.recaptcha.fields import RecaptchaField
-from werkzeug.exceptions import RequestTimeout
-from werkzeug.utils import redirect
-from wtforms.fields.core import DateField, StringField
-from wtforms.fields.simple import SubmitField
-
+from wtforms import SubmitField, StringField
+from testing_tool import Validation_Tool
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '4a7139823b8f9f3f4d5512f7b0b1b9add4cc843c7b4506cba7189305dfe55158'
@@ -14,7 +10,7 @@ class RegistrationForm(FlaskForm):
     middle_name = StringField('Middle Name')
     last_name = StringField('Last Name')
     # -, /, .
-    dob = StringField('Date of Birth',  render_kw={"placeholder": "dd/mm/yyyy"})
+    dob = StringField('Date of Birth',  render_kw={"placeholder": "dd-mm-yyyy"})
     mobile = StringField('Mobile')
     email = StringField('Email')
     age = StringField('Age')
@@ -28,15 +24,17 @@ class RegistrationForm(FlaskForm):
     dose_num = StringField('Dose Number', render_kw={
                            "placeholder": "1/2"})
     prev_id = StringField('Prev Dose ID', render_kw={
-                          "placeholder": "if dose 2 then add prev_id"})
+                          "placeholder": "Required if does number is 2"})
     prev_date = StringField('Prev Dose Date', render_kw={
-                            "placeholder": "if dose 2 then add prev_date"})
+                            "placeholder": "Required if does number is 2"})
     vaccine_name = StringField('Vaccine Name', render_kw={
         'placeholder': 'Covaxin/Covishield/Sputnik'})
     preferred_date = StringField('Preffered date of Vaccination', render_kw={
-                                 "placeholder": "dd/mm/yyyy"})
-    preferred_time = StringField('Preffered time of Vaccination', default='24 hr format')
+                                 "placeholder": "dd-mm-yyyy"})
     submit = SubmitField('Register')
+
+class ValidateForm(FlaskForm):
+    submit = SubmitField('Validate Form')
 
 @app.route('/')
 @app.route('/register', methods = ['GET', 'POST'])
@@ -44,7 +42,6 @@ def register():
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
         record = dict()
-        print('POSTING')
         record['first_name'] = form.first_name.data 
         record['middle_name'] = form.middle_name.data
         record['last_name'] = form.last_name.data
@@ -63,15 +60,29 @@ def register():
         record['prev_date'] = form.prev_date.data
         record['vaccine_name'] = form.vaccine_name.data
         record['preferred_date'] = form.preferred_date.data
-        record['preferred_time'] = form.preferred_time.data
         file = open('records.txt', 'a')
         file.write(str(record))
         file.write('\n')
         file.close()
-        return redirect('register')
+        return redirect('validate')
     else:
         return render_template('register.html', title='Registration From', form=form)
     return render_template('register.html', title='Registration From', form=form)
+
+@app.route('/validate', methods=['GET', 'POST'])
+def validate():
+    form = ValidateForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        file = open('records.txt')
+        record = file.read()
+        file.close()
+        tool = Validation_Tool()
+        record = tool.validate(record.splitlines()[-1])
+        # print(tool.testcase)
+        # print(record)
+        return render_template('validate.html', title='Validate', record=record, testcase=tool.testcase)
+    else:
+        return render_template('validate.html', title='Validate', form = form, result='none')
 
 if __name__ == '__main__':
     app.run(debug=True)
