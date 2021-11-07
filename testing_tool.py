@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import re
 
 class Validation():
@@ -51,22 +51,21 @@ class Validation_Tool():
 
    def validate_date(self, Date):
       format = "%d-%m-%Y"
-      res = 'pass'
       try:
-         res = bool(datetime.strptime(Date, format))
-         if res:
-            split_data = record['dob'].split('/')
-            dd, mm, yyyy = split_data[0], split_data[1], split_data[2]
-            if (date.today() - date(int(yyyy), int(mm), int(dd))).days < 0:
-               res = False
+         if(bool(datetime.strptime(Date, format))):
+            res = 'pass'
       except:
-         res = False
+         res = 'fail'
       return res
 
    def calculate_age(self, Date):
+      # print(Date)
+      split_date = Date.split('-')
+      dd, mm, yyyy  = split_date[0], split_date[1], split_date[2]
       today = date.today()
+      Date = date(int(yyyy), int(mm), int(dd))
       age = today.year - Date.year - ((today.month, today.day) < (Date.month, Date.day))
-      print(age)
+      # print(age)
       return age
    
    def validate_email(self, email):
@@ -76,10 +75,11 @@ class Validation_Tool():
       return False
    
    def validate(self, record):
-      pairs = record[1:-1].split(',')
+      record = record.strip().rstrip('\n')[1:-1]
+      pairs = record.split(',')
       record = {}
       for pair in pairs:
-         split_pair = pair.split(':')
+         split_pair = pair.strip().split(':')
          key, value = split_pair[0].strip().replace("'", ''), split_pair[1].strip().replace("'", '')
          record[key] = value
       for field in record:
@@ -87,14 +87,22 @@ class Validation_Tool():
          type = self.validation[field].type
          minLength = self.validation[field].minLength
          maxLength = self.validation[field].maxLength
+         if (field == 'prev_date' or field == 'prev_id') and record['dose_num'] == '1':
+            self.testcase[field] = 'pass'
+            continue
          if len(data) == 0 or len(data) < minLength or len(data) > maxLength:
             self.testcase[field] = 'fail'
             continue
          elif type == 'date':
-            if field == 'prev_date' and record['dose_num'] == '1':
-               self.testcase[field] = 'pass'
-               continue
-            self.testcase[field] = self.validate_date(date)
+            self.testcase[field] = self.validate_date(data)
+            if self.testcase[field] == 'pass' and (field == 'dob' or field == 'prev_date'):
+               # Date must be less than current date
+               if(self.calculate_age(data) != 0):
+                  self.testcase[field] = 'fail'
+                  # Date must be greater than current date
+            elif self.testcase[field] == 'pass' and field == 'preferred_date':
+               if(self.calculate_age(data) == 0):
+                  self.testcase[field] = 'fail'
             continue
          elif type == 'integer':
             for digit in data:
@@ -109,9 +117,7 @@ class Validation_Tool():
             if self.testcase['dob'] == 'fail':
                self.testcase[field] = 'fail'
                continue
-            split_data = record['dob'].split('/')
-            dd, mm, yyyy = split_data[0], split_data[1], split_data[2]
-            age = self.calculate_age(date(int(yyyy), int(mm), int(dd)))
+            age = self.calculate_age(record['dob'])
             if int(data) != age:
                self.testcase[field] = 'fail'
             continue
@@ -146,6 +152,12 @@ class Validation_Tool():
          
 if __name__ == '__main__':
    tool = Validation_Tool()
+   file = open('records.txt')
+   record = file.read()
+   file.close()
+   record = tool.validate(record.splitlines()[-1])
+   print(record)
+   print(tool.testcase)
 
 
 

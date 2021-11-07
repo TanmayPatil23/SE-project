@@ -74,12 +74,12 @@ def validate():
     form = ValidateForm()
     if request.method == 'POST' and form.validate_on_submit():
         file = open('records.txt')
-        record = file.readline()
+        record = file.read()
         file.close()
         tool = Validation_Tool()
-        record = tool.validate(record)
-        print(tool.testcase)
-        print(record)
+        record = tool.validate(record.splitlines()[-1])
+        # print(tool.testcase)
+        # print(record)
         return render_template('validate.html', title='Validate', record=record, testcase=tool.testcase)
     else:
         return render_template('validate.html', title='Validate', form = form, result='none')
