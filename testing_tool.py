@@ -22,10 +22,10 @@ class Validation_Tool():
       self.validation['state'] = Validation(type='string', minLength = 2, maxLength = 50)
       self.validation['pin'] = Validation(type='integer', minLength = 6, maxLength = 6)
       self.validation['aadhar'] = Validation(type='integer', minLength = 12, maxLength = 12)
-      self.validation['blood_grp'] = Validation(type='string', minLength = 2, maxLength = 3)
+      self.validation['blood_grp'] = Validation(type='blood_grp', minLength = 2, maxLength = 3)
       self.validation['dose_num'] = Validation(type='integer', minLength = 1, maxLength = 1)
-      self.validation['prev_id'] = Validation(type='integer', minLength = 12, maxLength = 12)
-      self.validation['prev_date'] = Validation(type='date', minLength = 10, maxLength = 10)
+      self.validation['prev_id'] = Validation(type='integer', minLength = 0, maxLength = 12)
+      self.validation['prev_date'] = Validation(type='date', minLength = 0, maxLength = 10)
       self.validation['vaccine_name'] = Validation(type='string', minLength=7, maxLength=10)
       self.validation['preferred_date'] = Validation(type='date', minLength=10, maxLength=10)
 
@@ -87,29 +87,32 @@ class Validation_Tool():
          type = self.validation[field].type
          minLength = self.validation[field].minLength
          maxLength = self.validation[field].maxLength
-         if (field == 'prev_date' or field == 'prev_id') and record['dose_num'] == '1':
-            self.testcase[field] = 'pass'
-            continue
-         if len(data) == 0 or len(data) < minLength or len(data) > maxLength:
+         if len(data) < minLength or len(data) > maxLength:
             self.testcase[field] = 'fail'
             continue
          elif type == 'date':
             self.testcase[field] = self.validate_date(data)
             if self.testcase[field] == 'pass' and (field == 'dob' or field == 'prev_date'):
                # Date must be less than current date
-               if(self.calculate_age(data) != 0):
-                  self.testcase[field] = 'fail'
-                  # Date must be greater than current date
-            elif self.testcase[field] == 'pass' and field == 'preferred_date':
                if(self.calculate_age(data) == 0):
                   self.testcase[field] = 'fail'
-            continue
+                  continue
+                  # Date must be greater than current date
+            elif self.testcase[field] == 'pass' and field == 'preferred_date':
+               if(self.calculate_age(data) != 0):
+                  self.testcase[field] = 'fail'
+                  continue
+         elif type == 'string':
+            if(not data.isalpha()):
+               self.testcase[field] = 'fail'
+               continue
          elif type == 'integer':
             for digit in data:
                if ord(digit) < 48 or ord(digit) > 57:
                   self.testcase[field] = 'fail'
                   break
-            continue
+            if not self.testcase[field]:
+               continue
          if field == 'email':
             self.testcase[field] = self.validate_email(data)
             continue
@@ -136,14 +139,19 @@ class Validation_Tool():
             continue
          elif field == 'prev_id':
             if record['dose_num'] == '1':
-               self.testcase[field] = 'pass'
-               continue
+               if len(data) != 0:
+                  self.testcase[field] = 'fail'
             if self.testcase['aadhar'] == 'fail':
                self.testcase[field] = 'fail'
-               continue
             if record['aadhar'] != data:
                self.testcase[field] = 'fail'
             continue
+         elif field == 'prev_date':
+            if record['dose_num'] == '1':
+               if len(data) == 0:
+                  self.testcase[field] = 'pass'
+               else:
+                  self.testcase[field] = 'fail'
          elif field == 'vaccine_name':
             if data.lower() not in ['covaxin', 'covishield', 'sputnik']:
                self.testcase[field] = 'fail'
