@@ -1,6 +1,11 @@
 from datetime import date, datetime
 import re
 
+class Testcase():
+   def __init__(self, result = 'pass', msg = ''):
+      self.result = result
+      self.msg = msg
+
 class Validation():
    def __init__(self, type, minLength, maxLength):
       self.type = type
@@ -30,24 +35,24 @@ class Validation_Tool():
       self.validation['preferred_date'] = Validation(type='date', minLength=10, maxLength=10)
 
       self.testcase = {}
-      self.testcase['first_name'] = 'pass'
-      self.testcase['middle_name'] = 'pass'
-      self.testcase['last_name'] = 'pass'
-      self.testcase['dob'] = 'pass'
-      self.testcase['mobile'] = 'pass'
-      self.testcase['email'] = 'pass'
-      self.testcase['age'] = 'pass'
-      self.testcase['gender'] = 'pass'
-      self.testcase['city'] = 'pass'
-      self.testcase['state'] = 'pass'
-      self.testcase['pin'] = 'pass'
-      self.testcase['aadhar'] = 'pass'
-      self.testcase['blood_grp'] = 'pass'
-      self.testcase['dose_num'] = 'pass'
-      self.testcase['prev_id'] = 'pass'
-      self.testcase['prev_date'] = 'pass'
-      self.testcase['vaccine_name'] = 'pass'
-      self.testcase['preferred_date'] = 'pass'
+      self.testcase['first_name'] = Testcase()
+      self.testcase['middle_name'] = Testcase()
+      self.testcase['last_name'] = Testcase()
+      self.testcase['dob'] = Testcase()
+      self.testcase['mobile'] = Testcase()
+      self.testcase['email'] = Testcase()
+      self.testcase['age'] = Testcase()
+      self.testcase['gender'] = Testcase()
+      self.testcase['city'] = Testcase()
+      self.testcase['state'] = Testcase()
+      self.testcase['pin'] = Testcase()
+      self.testcase['aadhar'] = Testcase()
+      self.testcase['blood_grp'] = Testcase()
+      self.testcase['dose_num'] = Testcase()
+      self.testcase['prev_id'] = Testcase()
+      self.testcase['prev_date'] = Testcase()
+      self.testcase['vaccine_name'] = Testcase()
+      self.testcase['preferred_date'] = Testcase()
 
    def validate_date(self, Date):
       format = "%d-%m-%Y"
@@ -88,73 +93,92 @@ class Validation_Tool():
          minLength = self.validation[field].minLength
          maxLength = self.validation[field].maxLength
          if len(data) < minLength or len(data) > maxLength:
-            self.testcase[field] = 'fail'
+            self.testcase[field].result = 'fail'
+            self.testcase[field].msg = f'LengthError: possible minLength: {minLength} & maxLength: {maxLength}'
             continue
          elif type == 'date':
-            self.testcase[field] = self.validate_date(data)
-            if self.testcase[field] == 'pass' and (field == 'dob' or field == 'prev_date'):
+            self.testcase[field].result = self.validate_date(data)
+            if self.testcase[field].result == 'fail':
+               self.testcase[field].msg = 'DateError: Invalid Date format'
+            if self.testcase[field].result == 'pass' and (field == 'dob' or field == 'prev_date'):
                # Date must be less than current date
                if(self.calculate_age(data) == 0):
-                  self.testcase[field] = 'fail'
+                  self.testcase[field].result = 'fail'
+                  self.testcase[field].msg = 'DateError: Date must be less than current date'
                   continue
                   # Date must be greater than current date
-            elif self.testcase[field] == 'pass' and field == 'preferred_date':
+            elif self.testcase[field].result == 'pass' and field == 'preferred_date':
                if(self.calculate_age(data) != 0):
-                  self.testcase[field] = 'fail'
+                  self.testcase[field].result = 'fail'
+                  self.testcase[field].msg = 'DateError: Date must be greater than current date'
                   continue
          elif type == 'string':
             if(not data.isalpha()):
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = 'StringError: Only alphabetical character allowed'
                continue
          elif type == 'integer':
             for digit in data:
                if ord(digit) < 48 or ord(digit) > 57:
-                  self.testcase[field] = 'fail'
+                  self.testcase[field].result = 'fail'
+                  self.testcase[field].msg = 'IntegerError: Only integer allowed'
                   break
-            if not self.testcase[field]:
+            if self.testcase[field].result == 'fail':
                continue
          if field == 'email':
-            self.testcase[field] = self.validate_email(data)
+            self.testcase[field].result = self.validate_email(data)
+            if self.testcase[field].result == 'fail':
+               self.testcase[field].msg = 'EmailError: Invalid email id'
             continue
          elif field == 'age':
-            if self.testcase['dob'] == 'fail':
-               self.testcase[field] = 'fail'
+            if self.testcase['dob'].result == 'fail':
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = 'AgeError: DOB is Invalid hence Age is Invalid'
                continue
             age = self.calculate_age(record['dob'])
             if int(data) != age:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = f'AgeError: Age must be {age} from according to {record["DOB"]}'
             continue
          elif field == 'gender':
             if data.lower() not in ['male', 'female', 'other']:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = 'GenderError: Invalid gender. Valid gender are "male", "female", "other"'
             continue
          elif field == 'blood_grp':
             data = data.lower()
             if data not in ['a+', 'a-', 'b+', 'b-', 'ab+', 'ab-', 'o+', 'o-']:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = "BloodGroupError: Invalid data. Valid blood groups are 'a+', 'a-', 'b+', 'b-', 'ab+', 'ab-', 'o+', 'o-'"
             continue
          elif field == 'dose_num':
             if data not in ['1', '2']:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = 'DoseNumError: Invalid dose num. Possible dose num are 1 and 2'
             continue
          elif field == 'prev_id':
             if record['dose_num'] == '1':
                if len(data) != 0:
-                  self.testcase[field] = 'fail'
-            if self.testcase['aadhar'] == 'fail':
-               self.testcase[field] = 'fail'
+                  self.testcase[field].result = 'fail'
+                  self.testcase[field].msg = 'PrevIdError: PrevID must be empty as current dose num is 1'
+            if self.testcase['aadhar'].result == 'fail':
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = 'PrevIdError: Aadhar field is invalid. So does prevID'
             if record['aadhar'] != data:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = f'PrevIdError: prev id must be equal to {record["aadhar"]}'
             continue
          elif field == 'prev_date':
             if record['dose_num'] == '1':
                if len(data) == 0:
-                  self.testcase[field] = 'pass'
+                  self.testcase[field].result = 'pass'
                else:
-                  self.testcase[field] = 'fail'
+                  self.testcase[field].result = 'fail'
+                  self.testcase[field].msg = 'DateError: prev date must be empty as dose num is 1'
          elif field == 'vaccine_name':
             if data.lower() not in ['covaxin', 'covishield', 'sputnik']:
-               self.testcase[field] = 'fail'
+               self.testcase[field].result = 'fail'
+               self.testcase[field].msg = "VaccineNameError: Invalid Vaccine name. Valid vaccine names are 'covaxin', 'covishield', 'sputnik'"
             continue
       return record
          

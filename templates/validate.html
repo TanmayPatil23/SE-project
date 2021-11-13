@@ -19,7 +19,7 @@
    </form>
    {% else %}
    <div class="text-center mt-3 mb-2">
-<a class="btn btn-outline-info" href="{{url_for('register')}}">Go To Register</a>
+      <a class="btn btn-outline-info" href="{{url_for('register')}}">Go To Register</a>
    </div>
    <section class="container mt-5 mx-auto col-xl-6" style="background-color: rgb(255, 255, 255);">
       <h5 class="text-center mb-3">Validation Result</h5>
@@ -30,16 +30,31 @@
             <th>Result</th>
          </tr>
          {% for field in testcase %}
+         {% if testcase[field].result == 'pass' %}
          <tr>
             <td>{{field}}</td>
             <td>{{record[field]}}</td>
-            <td> 
-               {% if testcase[field] == 'pass' %} <img src="{{url_for('static', filename='pass.png')}}" style="height: 30px; width: 30px;" alt="..."> 
-               {% else %}
-               <img src="{{url_for('static', filename='fail.png')}}" style="height: 30px; width: 30px;" alt="...">
-               {% endif %}
+            <td>
+               <img src="{{url_for('static', filename='pass.png')}}" style="height: 30px; width: 30px;" alt="...">
             </td>
          </tr>
+         {% else %}
+         <tr>
+            <td>{{field}}</td>
+            <td>{{record[field]}}</td>
+            <td>
+               <img src="{{url_for('static', filename='fail.png')}}" style="height: 30px; width: 30px;" alt="...">
+            </td>
+         </tr>
+         <tr>
+            <td colspan="3">
+               <details>
+                  <summary>View Error Msg</summary>
+                  <p>{{testcase[field].msg}}</p>
+               </details>
+            </td>
+         </tr>
+         {% endif %}
          {% endfor %}
       </table>
 
