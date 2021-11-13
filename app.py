@@ -24,7 +24,7 @@ class RegistrationForm(FlaskForm):
     dose_num = StringField('Dose Number', render_kw={
                            "placeholder": "1/2"})
     prev_id = StringField('Prev Dose ID', render_kw={
-                          "placeholder": "Required if does number is 2"})
+                          "placeholder": "Required if dose number is 2"})
     prev_date = StringField('Prev Dose Date', render_kw={
                             "placeholder": "Required if does number is 2"})
     vaccine_name = StringField('Vaccine Name', render_kw={
@@ -78,8 +78,6 @@ def validate():
         file.close()
         tool = Validation_Tool()
         record = tool.validate(record.splitlines()[-1])
-        # print(tool.testcase)
-        # print(record)
         return render_template('validate.html', title='Validate', record=record, testcase=tool.testcase)
     else:
         return render_template('validate.html', title='Validate', form = form, result='none')
